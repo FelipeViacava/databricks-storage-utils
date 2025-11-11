@@ -2,9 +2,12 @@ __all__ = [
     "DataFrameWriter",
 ]
 
-import pyspark
-from pyspark.dbutils import DBUtils
-from typing import Dict, Tuple, List, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Dict, Tuple, List, Union
+
+if TYPE_CHECKING:
+    import pyspark
 
 DEFAULT_OPTIONS = {
     'overwriteSchema': 'true',
@@ -66,7 +69,7 @@ class DataFrameWriter:
 
     def print_path_files(
         self,
-        spark_session: pyspark.sql.SparkSession,
+        spark_session: "pyspark.sql.SparkSession",
         path: str = None,
     ) -> None:
         """
@@ -88,7 +91,7 @@ class DataFrameWriter:
 
     def get_path_files(
         self,
-        spark_session: pyspark.sql.SparkSession,
+        spark_session: "pyspark.sql.SparkSession",
         path = None,
     ) -> List[str]:
         """
@@ -110,7 +113,7 @@ class DataFrameWriter:
     
     def delete_path_files(
         self,
-        spark_session: pyspark.sql.SparkSession,
+        spark_session: "pyspark.sql.SparkSession",
         files: Union[str, List[str]] = None,
         recurse: bool = False,
         path: str = None,
@@ -136,9 +139,9 @@ class DataFrameWriter:
 
     def write(
         self,
-        df: pyspark.sql.DataFrame,
+        df: "pyspark.sql.DataFrame",
         name: str,
-        partition_cols: List[pyspark.sql.Column] = None,
+        partition_cols: List["pyspark.sql.Column"] = None,
         path: str = None,
         mode: str = None,
         file_format: str = None,
@@ -187,13 +190,13 @@ class DataFrameWriter:
 
     def load(
         self,
-        spark_session: pyspark.sql.SparkSession,
+        spark_session: "pyspark.sql.SparkSession",
         name: str,
         path: str = None,
         mode: str = None,
         file_format: str = None,
         options: Dict[str, str] = None,
-    ) -> pyspark.sql.DataFrame:
+    ) -> "pyspark.sql.DataFrame":
         """
         Loads a Spark DataFrame from a file.
 
@@ -222,16 +225,16 @@ class DataFrameWriter:
     
     def write_load(
         self,
-        spark_session: pyspark.sql.SparkSession,
-        df: pyspark.sql.DataFrame,
+        spark_session: "pyspark.sql.SparkSession",
+        df: "pyspark.sql.DataFrame",
         name: str,
-        partition_cols: List[pyspark.sql.Column] = None,
+        partition_cols: List["pyspark.sql.Column"] = None,
         path: str = None,
         mode: str = None,
         file_format: str = None,
         options: str = None,
         write: bool = True,
-    ) -> pyspark.sql.DataFrame:
+    ) -> "pyspark.sql.DataFrame":
         """
         Writes a Spark DataFrame to a file and returns a Spark DataFrame loaded from that file.
         Essentially, acts as a checkpoint, allowing the user to write a DataFrame to a file and
@@ -321,7 +324,7 @@ class DataFrameWriter:
         return path, mode, file_format, options
     
 def get_path_files(
-    spark_session: pyspark.sql.SparkSession,
+    spark_session: "pyspark.sql.SparkSession",
     path: str,
 ) -> List[str]:
     """
@@ -338,13 +341,15 @@ def get_path_files(
     -------
     None
     """
+    from pyspark.dbutils import DBUtils
+
     dbutils = DBUtils(spark_session)
     files = dbutils.fs.ls(path)
     files = [name for path, name, size, ts in files]
     return files
 
 def delete_path_files(
-    spark_session: pyspark.sql.SparkSession,
+    spark_session: "pyspark.sql.SparkSession",
     path: str = None,
     files: Union[str, List[str]] = None,
     recurse: bool = False,
@@ -365,6 +370,8 @@ def delete_path_files(
     recurse : bool, optional, default False
         Whether to recursively delete the files within a subdirectory.
     """
+    from pyspark.dbutils import DBUtils
+
     path = '' if path is None else path
 
     files = '' if files is None else files
@@ -379,7 +386,7 @@ def delete_path_files(
         dbutils.fs.rm(fp, recurse=recurse)
     
 def print_path_files(
-    spark_session: pyspark.sql.SparkSession,
+    spark_session: "pyspark.sql.SparkSession",
     path: str,
 ) -> None:
     """
@@ -404,9 +411,9 @@ def print_path_files(
         print(f"    {name}")
 
 def write_file(
-    df: pyspark.sql.DataFrame,
+    df: "pyspark.sql.DataFrame",
     path: str,
-    partition_cols: List[pyspark.sql.Column] = None,
+    partition_cols: List["pyspark.sql.Column"] = None,
     mode: str = 'overwrite',
     file_format: str = 'parquet',
     options: str = None,
@@ -455,13 +462,13 @@ def write_file(
     df_writer = df_writer.format(file_format).save(path)
 
 def write_load_file(
-    spark_session: pyspark.sql.SparkSession,
-    df: pyspark.sql.DataFrame,
+    spark_session: "pyspark.sql.SparkSession",
+    df: "pyspark.sql.DataFrame",
     path: str,
     write: bool = True,
     file_format: str = 'parquet',
     **kwargs,
-) -> pyspark.sql.DataFrame:
+) -> "pyspark.sql.DataFrame":
     """
     Writes a Spark DataFrame to a file and returns a new DataFrame loaded from the file.
 
@@ -489,3 +496,10 @@ def write_load_file(
         write_file(df, path, file_format=file_format, **kwargs)
     
     return spark_session.read.format(file_format).load(path)
+
+
+if __name__ == '__main__':
+    from pyspark.sql import SparkSession
+    spark = SparkSession.builder.appName('test').getOrCreate()
+    writer = DataFrameWriter()
+    print("success")
