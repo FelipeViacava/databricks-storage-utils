@@ -172,12 +172,17 @@ class DataFrameWriter:
         -------
         None
         """
+        import os
+
         path, mode, file_format, options = self._get_defaults(
             path, mode, file_format, options
         )
+
+        full_path = os.path.join(path, name)
+
         write_file(
             df,
-            path + name,
+            full_path,
             partition_cols = partition_cols,
             mode = mode,
             file_format = file_format,
@@ -213,10 +218,14 @@ class DataFrameWriter:
         options : Dict, optional, default None
             Only here for consistency with the `write` method.
         """
+        import os
+
         path, mode, file_format, options = self._get_defaults(
             path, mode, file_format, options
         )
-        df = spark_session.read.format(file_format).load(path+name)
+
+        full_path = os.path.join(path, name)
+        df = spark_session.read.format(file_format).load(full_path)
         return df
     
     def write_load(
